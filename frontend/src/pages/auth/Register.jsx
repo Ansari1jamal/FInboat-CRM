@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { registerApi } from "../../services/auth.api";
 
@@ -23,17 +23,21 @@ const Register = () => {
   const [form, setForm] = useState(initialForm);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [existingAccount, setExistingAccount] = useState(false);
   const [success, setSuccess] = useState("");
 
   const handleChange = (event) => {
     const { name, value } = event.target;
     setForm((previous) => ({ ...previous, [name]: value }));
+    setError("");
+    setExistingAccount(false);
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
     setError("");
+    setExistingAccount(false);
     setSuccess("");
     setLoading(true);
 
@@ -49,10 +53,14 @@ const Register = () => {
         navigate("/dashboard", { replace: true });
       }, 900);
     } catch (requestError) {
+      const isConflict = requestError.response?.status === 409;
+      setExistingAccount(isConflict);
       setError(
-        requestError.response?.data?.message ||
-          requestError.message ||
-          "Unable to register user."
+        isConflict
+          ? "An account with this email already exists."
+          : requestError.response?.data?.message ||
+              requestError.message ||
+              "Unable to register user."
       );
     } finally {
       setLoading(false);
@@ -78,8 +86,23 @@ const Register = () => {
 
         <form onSubmit={handleSubmit} className="w-full">
           {error && (
-            <div className="mb-6 rounded-2xl border border-[#f3b8c1] bg-[#f9dfe3] px-5 py-4 text-[1.1rem] font-semibold text-[#d92d48] shadow-sm">
-              {error}
+            <div
+              role="alert"
+              className="mb-6 rounded-2xl border border-[#f3b8c1] bg-[#f9dfe3] px-5 py-4 text-[1.1rem] font-semibold text-[#d92d48] shadow-sm"
+            >
+              <p>{error}</p>
+              {existingAccount && (
+                <p className="mt-2 text-base font-medium">
+                  Sign in with the existing account, or use another email to
+                  create a different team user.{" "}
+                  <Link
+                    to="/login"
+                    className="font-bold underline"
+                  >
+                    Go to sign in
+                  </Link>
+                </p>
+              )}
             </div>
           )}
 
