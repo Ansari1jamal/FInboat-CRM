@@ -6,39 +6,27 @@ const envTestPath = path.resolve(
   "../.env.test"
 );
 
-console.log("========================================");
-console.log("JEST SETUP");
-console.log(".env.test path:");
-console.log(envTestPath);
-console.log("========================================");
-
 const result = dotenv.config({
   path: envTestPath,
   override: true,
+  quiet: true,
 });
 
-if (result.error) {
+if (result.error && result.error.code !== "ENOENT") {
   throw new Error(
     `.env.test could not be loaded from:\n${envTestPath}\n\n${result.error.message}`
   );
 }
 
-console.log(
-  "TEST_USER_PASSWORD:",
-  process.env.TEST_USER_PASSWORD
-    ? "LOADED"
-    : "MISSING"
-);
-
 if (!process.env.TEST_USER_EMAIL) {
   throw new Error(
-    "TEST_USER_EMAIL is missing from .env.test"
+    "TEST_USER_EMAIL must be set in .env.test or the test environment"
   );
 }
 
 if (!process.env.TEST_USER_PASSWORD) {
   throw new Error(
-    "TEST_USER_PASSWORD is missing from .env.test"
+    "TEST_USER_PASSWORD must be set in .env.test or the test environment"
   );
 }
 

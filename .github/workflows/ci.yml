@@ -53,6 +53,8 @@ jobs:
       FRONTEND_URL: http://localhost:5173
       SEED_ADMIN_EMAIL: admin@finboat1.com
       SEED_ADMIN_PASSWORD: Admin@12345
+      TEST_USER_EMAIL: admin@finboat1.com
+      TEST_USER_PASSWORD: Admin@12345
 
     defaults:
       run:
@@ -86,3 +88,30 @@ jobs:
 
       - name: Build Docker image
         run: docker build --tag finboat-api:${{ github.sha }} .
+
+  frontend-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+        env:
+          VITE_API_URL: http://localhost:5000/api

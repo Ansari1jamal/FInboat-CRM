@@ -13,29 +13,6 @@ describe("CSRF Authentication Flow", () => {
     const response = await agent
       .get("/api/auth/csrf-token");
 
-    console.log(
-      "\n========== CSRF RESPONSE =========="
-    );
-
-    console.log(
-      "Status:",
-      response.statusCode
-    );
-
-    console.log(
-      "Body:",
-      response.body
-    );
-
-    console.log(
-      "Set-Cookie:",
-      response.headers["set-cookie"]
-    );
-
-    console.log(
-      "====================================\n"
-    );
-
     expect(response.statusCode).toBe(200);
 
     expect(response.body.success).toBe(true);
@@ -79,24 +56,6 @@ describe("CSRF Authentication Flow", () => {
         password:
           process.env.TEST_USER_PASSWORD,
       });
-
-    console.log(
-      "\n========== LOGIN RESPONSE =========="
-    );
-
-    console.log(
-      "Status:",
-      loginResponse.statusCode
-    );
-
-    console.log(
-      "Body:",
-      loginResponse.body
-    );
-
-    console.log(
-      "====================================\n"
-    );
 
     expect(loginResponse.statusCode).toBe(200);
   });
