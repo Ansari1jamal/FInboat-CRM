@@ -1,0 +1,76 @@
+# FinBoat CRM
+
+FinBoat CRM is a loan lifecycle application with a React/Vite frontend, an
+Express API, PostgreSQL/Prisma persistence, and Redis/BullMQ background jobs.
+
+## Local development
+
+Use separate terminals for the API and frontend. Install dependencies in each
+application directory before the first run:
+
+```powershell
+cd backend
+npm install
+Copy-Item .env.example .env
+npm run dev
+```
+
+Configure the backend `.env` for a local PostgreSQL database and Redis before
+starting the API. Do not copy production credentials into a development
+environment.
+
+```powershell
+cd frontend
+npm install
+Copy-Item .env.example .env
+npm run dev
+```
+
+Set `VITE_API_URL` in `frontend/.env` to the local API base URL ending in
+`/api`. Vite embeds this value when building the frontend; production builds
+must use `frontend/.env.production` with the approved HTTPS API URL.
+
+## Common checks
+
+```powershell
+cd backend
+npm test
+npx prisma validate
+npx prisma migrate status
+
+cd ..\frontend
+npm run build
+```
+
+`migrate status` is a read-only check. Apply migrations only in the intended
+environment, following the deployment runbook.
+
+## Deployment and operations
+
+- [Production deployment runbook](./backend/DEPLOYMENT.md)
+- [Disaster recovery and backup/restore](./backend/docs/DISASTER_RECOVERY.md)
+- [Project handover](./docs/HANDOVER.md)
+- [UAT checklist](./docs/UAT-CHECKLIST.md)
+- [UAT issues and release gates](./docs/UAT-ISSUES.md)
+- [Security monitoring and incident response](./docs/SECURITY-MONITORING.md)
+- [Prisma schema and migrations](./backend/prisma)
+
+## API documentation
+
+The OpenAPI definition is [swagger.yaml](./backend/src/docs/swagger.yaml).
+When the API is running, Swagger UI is available at `/api-docs`.
+
+## Environment and secrets
+
+Environment templates are in `backend/.env.example`,
+`backend/.env.production.example`, `backend/.env.docker.example`,
+`frontend/.env.example`, and `frontend/.env.production.example`. These are
+templates only: replace placeholders in private environment files and never
+commit real credentials, tokens, or customer data.
+
+## Release status
+
+A successful local test suite or frontend build does not establish production
+readiness. Production health, role authorization, backups and restore, and
+business UAT must be verified in the target environment. See the release gates
+in [UAT-ISSUES.md](./docs/UAT-ISSUES.md).

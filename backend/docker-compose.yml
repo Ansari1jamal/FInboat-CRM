@@ -1,0 +1,196 @@
+services:
+
+  # ========================================
+  # POSTGRESQL
+  # ========================================
+
+  postgres:
+
+    image: postgres:16-alpine
+
+    container_name: finboat-postgres
+
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER must be set}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB must be set}
+
+    ports:
+      - "127.0.0.1:5432:5432"
+
+    volumes:
+      - finboat_postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""
+        ]
+
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+
+  # ========================================
+  # REDIS
+  # ========================================
+
+  redis:
+
+    image: redis:7-alpine
+
+    container_name: finboat-redis
+
+    restart: unless-stopped
+
+    command:
+      [
+        "redis-server",
+        "--appendonly",
+        "yes",
+        "--requirepass",
+        "${REDIS_PASSWORD:?REDIS_PASSWORD must be set}"
+      ]
+
+    ports:
+      - "127.0.0.1:6379:6379"
+
+    volumes:
+      - finboat_redis_data:/data
+
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "redis-cli --pass \"$${REDIS_PASSWORD}\" ping | grep -q PONG"
+        ]
+
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+
+  # ========================================
+  # API
+  # ========================================
+
+  api:
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: finboat-api
+
+    restart: unless-stopped
+
+    ports:
+      - "5000:5000"
+
+    environment:
+
+      NODE_ENV: production
+
+      PORT: 5000
+
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL must be set}
+
+      REDIS_HOST: redis
+
+      REDIS_PORT: 6379
+
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
+
+      FRONTEND_URL: ${FRONTEND_URL:?FRONTEND_URL must be set}
+
+      LOG_LEVEL: info
+
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
+
+      CSRF_SECRET: ${CSRF_SECRET:?CSRF_SECRET must be set}
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://127.0.0.1:5000/api/health/live', response => process.exit(response.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+    depends_on:
+
+      postgres:
+        condition: service_healthy
+
+      redis:
+        condition: service_healthy
+
+
+  # ========================================
+  # WORKER
+  # ========================================
+
+  worker:
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: finboat-worker
+
+    restart: unless-stopped
+
+    command:
+      [
+        "node",
+        "src/worker.js"
+      ]
+
+    environment:
+
+      NODE_ENV: production
+
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL must be set}
+
+      REDIS_HOST: redis
+
+      REDIS_PORT: 6379
+
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
+
+      LOG_LEVEL: info
+
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
+
+      CSRF_SECRET: ${CSRF_SECRET:?CSRF_SECRET must be set}
+
+    depends_on:
+
+      postgres:
+        condition: service_healthy
+
+      redis:
+        condition: service_healthy
+
+
+# ========================================
+# VOLUMES
+# ========================================
+
+volumes:
+
+  finboat_postgres_data:
+
+  finboat_redis_data:

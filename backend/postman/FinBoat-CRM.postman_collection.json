@@ -1,0 +1,109 @@
+{
+  "info": {
+    "name": "FinBoat CRM",
+    "description": "Core FinBoat API integration flow. Import with FinBoat-CRM.postman_environment.json.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "BASE_URL", "value": "http://localhost:5000" }
+  ],
+  "item": [
+    {
+      "name": "01 Health",
+      "item": [
+        { "name": "Live", "request": { "method": "GET", "header": [], "url": { "raw": "{{BASE_URL}}/api/health/live", "host": ["{{BASE_URL}}"], "path": ["api", "health", "live"] } } },
+        { "name": "Ready", "request": { "method": "GET", "header": [], "url": { "raw": "{{BASE_URL}}/api/health/ready", "host": ["{{BASE_URL}}"], "path": ["api", "health", "ready"] } } }
+      ]
+    },
+    {
+      "name": "02 Auth",
+      "item": [
+        {
+          "name": "Login Admin",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{ADMIN_EMAIL}}\",\n  \"password\": \"{{ADMIN_PASSWORD}}\"\n}" },
+            "url": { "raw": "{{BASE_URL}}/api/auth/login", "host": ["{{BASE_URL}}"], "path": ["api", "auth", "login"] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["const json = pm.response.json();", "if (json.data?.accessToken) {", "  pm.environment.set('ADMIN_TOKEN', json.data.accessToken);", "  pm.environment.set('ACCESS_TOKEN', json.data.accessToken);", "}"] } }]
+        },
+        {
+          "name": "Login Manager",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{MANAGER_EMAIL}}\",\n  \"password\": \"{{MANAGER_PASSWORD}}\"\n}" },
+            "url": { "raw": "{{BASE_URL}}/api/auth/login", "host": ["{{BASE_URL}}"], "path": ["api", "auth", "login"] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["const json = pm.response.json();", "if (json.data?.accessToken) pm.environment.set('MANAGER_TOKEN', json.data.accessToken);"] } }]
+        },
+        {
+          "name": "Login TL",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{TL_EMAIL}}\",\n  \"password\": \"{{TL_PASSWORD}}\"\n}" },
+            "url": { "raw": "{{BASE_URL}}/api/auth/login", "host": ["{{BASE_URL}}"], "path": ["api", "auth", "login"] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["const json = pm.response.json();", "if (json.data?.accessToken) pm.environment.set('TL_TOKEN', json.data.accessToken);"] } }]
+        },
+        {
+          "name": "Login Telecaller",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{TELECALLER_EMAIL}}\",\n  \"password\": \"{{TELECALLER_PASSWORD}}\"\n}" },
+            "url": { "raw": "{{BASE_URL}}/api/auth/login", "host": ["{{BASE_URL}}"], "path": ["api", "auth", "login"] }
+          },
+          "event": [{ "listen": "test", "script": { "exec": ["const json = pm.response.json();", "if (json.data?.accessToken) pm.environment.set('TELECALLER_TOKEN', json.data.accessToken);"] } }]
+        }
+      ]
+    },
+    {
+      "name": "03 Users and Teams",
+      "item": [
+        {
+          "name": "Create Manager",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{ADMIN_TOKEN}}" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Manager One\",\n  \"email\": \"manager1@finboat.com\",\n  \"password\": \"Manager@123\",\n  \"role\": \"MANAGER\"\n}" }, "url": { "raw": "{{BASE_URL}}/api/users", "host": ["{{BASE_URL}}"], "path": ["api", "users"] } }
+        },
+        { "name": "List Users", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{ADMIN_TOKEN}}" }], "url": { "raw": "{{BASE_URL}}/api/users?page=1&limit=20", "host": ["{{BASE_URL}}"], "path": ["api", "users"], "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "20" }] } } },
+        { "name": "List Teams", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{ADMIN_TOKEN}}" }], "url": { "raw": "{{BASE_URL}}/api/teams", "host": ["{{BASE_URL}}"], "path": ["api", "teams"] } } }
+      ]
+    },
+    {
+      "name": "04 Leads",
+      "item": [
+        {
+          "name": "Create Lead",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{ADMIN_TOKEN}}" }], "body": { "mode": "raw", "raw": "{\n  \"customerName\": \"Rahul Sharma\",\n  \"mobile\": \"9876543210\",\n  \"loanType\": \"PERSONAL\",\n  \"loanAmount\": 250000,\n  \"source\": \"WEBSITE\"\n}" }, "url": { "raw": "{{BASE_URL}}/api/leads", "host": ["{{BASE_URL}}"], "path": ["api", "leads"] } },
+          "event": [{ "listen": "test", "script": { "exec": ["const json = pm.response.json();", "const id = json.data?.lead?.id || json.data?.id;", "if (id) pm.environment.set('LEAD_ID', id);"] } }]
+        },
+        { "name": "List Leads", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{ADMIN_TOKEN}}" }], "url": { "raw": "{{BASE_URL}}/api/leads?page=1&limit=20", "host": ["{{BASE_URL}}"], "path": ["api", "leads"], "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "20" }] } } },
+        { "name": "Assign Lead", "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{ADMIN_TOKEN}}" }], "body": { "mode": "raw", "raw": "{\n  \"toUserId\": \"{{TELECALLER_ID}}\",\n  \"toTeamId\": \"{{TEAM_ID}}\",\n  \"reason\": \"Assigned for follow-up\"\n}" }, "url": { "raw": "{{BASE_URL}}/api/leads/{{LEAD_ID}}/assign", "host": ["{{BASE_URL}}"], "path": ["api", "leads", "{{LEAD_ID}}", "assign"] } } },
+        { "name": "Lead Status", "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{ADMIN_TOKEN}}" }], "body": { "mode": "raw", "raw": "{\n  \"status\": \"INTERESTED\",\n  \"note\": \"Customer interested\"\n}" }, "url": { "raw": "{{BASE_URL}}/api/leads/{{LEAD_ID}}/status", "host": ["{{BASE_URL}}"], "path": ["api", "leads", "{{LEAD_ID}}", "status"] } } },
+        { "name": "Status History", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{ADMIN_TOKEN}}" }], "url": { "raw": "{{BASE_URL}}/api/leads/{{LEAD_ID}}/status-history", "host": ["{{BASE_URL}}"], "path": ["api", "leads", "{{LEAD_ID}}", "status-history"] } } },
+        { "name": "Timeline", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{ADMIN_TOKEN}}" }], "url": { "raw": "{{BASE_URL}}/api/leads/{{LEAD_ID}}/timeline", "host": ["{{BASE_URL}}"], "path": ["api", "leads", "{{LEAD_ID}}", "timeline"] } } }
+      ]
+    },
+    {
+      "name": "05 Applications and Loans",
+      "item": [
+        { "name": "Create Application", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{ADMIN_TOKEN}}" }], "body": { "mode": "raw", "raw": "{\n  \"requestedAmount\": 250000,\n  \"lenderId\": \"{{LENDER_ID}}\"\n}" }, "url": { "raw": "{{BASE_URL}}/api/applications/leads/{{LEAD_ID}}", "host": ["{{BASE_URL}}"], "path": ["api", "applications", "leads", "{{LEAD_ID}}"] } } },
+        { "name": "Application Status", "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{ADMIN_TOKEN}}" }], "body": { "mode": "raw", "raw": "{\n  \"status\": \"SUBMITTED\"\n}" }, "url": { "raw": "{{BASE_URL}}/api/applications/{{APPLICATION_ID}}/status", "host": ["{{BASE_URL}}"], "path": ["api", "applications", "{{APPLICATION_ID}}", "status"] } } },
+        { "name": "Convert To Loan", "request": { "method": "POST", "header": [{ "key": "Authorization", "value": "Bearer {{ADMIN_TOKEN}}" }], "url": { "raw": "{{BASE_URL}}/api/loans/applications/{{APPLICATION_ID}}/convert", "host": ["{{BASE_URL}}"], "path": ["api", "loans", "applications", "{{APPLICATION_ID}}", "convert"] } } },
+        { "name": "Create EMI Schedule", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{ADMIN_TOKEN}}" }], "body": { "mode": "raw", "raw": "{\n  \"firstEmiDate\": \"2026-10-05\"\n}" }, "url": { "raw": "{{BASE_URL}}/api/loans/{{LOAN_ID}}/emi-schedule", "host": ["{{BASE_URL}}"], "path": ["api", "loans", "{{LOAN_ID}}", "emi-schedule"] } } },
+        { "name": "Create Repayment", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{ADMIN_TOKEN}}" }], "body": { "mode": "raw", "raw": "{\n  \"emiScheduleId\": \"{{EMI_ID}}\",\n  \"amount\": 5000,\n  \"paymentMode\": \"UPI\",\n  \"transactionId\": \"TXN-10001\"\n}" }, "url": { "raw": "{{BASE_URL}}/api/loans/{{LOAN_ID}}/repayments", "host": ["{{BASE_URL}}"], "path": ["api", "loans", "{{LOAN_ID}}", "repayments"] } } }
+      ]
+    },
+    {
+      "name": "06 Reports and Notifications",
+      "item": [
+        { "name": "Notifications", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }], "url": { "raw": "{{BASE_URL}}/api/notifications", "host": ["{{BASE_URL}}"], "path": ["api", "notifications"] } } },
+        { "name": "Dashboard", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }], "url": { "raw": "{{BASE_URL}}/api/dashboard", "host": ["{{BASE_URL}}"], "path": ["api", "dashboard"] } } },
+        { "name": "Financial Summary", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }], "url": { "raw": "{{BASE_URL}}/api/reports/financial-summary", "host": ["{{BASE_URL}}"], "path": ["api", "reports", "financial-summary"] } } },
+        { "name": "Global Search", "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{ACCESS_TOKEN}}" }], "url": { "raw": "{{BASE_URL}}/api/search?q=Rahul", "host": ["{{BASE_URL}}"], "path": ["api", "search"], "query": [{ "key": "q", "value": "Rahul" }] } } }
+      ]
+    }
+  ]
+}

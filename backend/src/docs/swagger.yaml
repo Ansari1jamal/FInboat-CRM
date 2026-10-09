@@ -1,0 +1,3617 @@
+openapi: 3.0.3
+
+info:
+  title: FinBoat CRM API
+  version: 1.0.0
+  description: |
+    FinBoat CRM Backend API Documentation.
+
+    FinBoat CRM manages the complete loan lifecycle.
+
+    Main modules:
+    - Authentication
+    - Users
+    - Teams
+    - Leads
+    - Calls
+    - Follow-ups
+    - Applications
+    - Lenders
+    - Loans
+    - EMI
+    - Repayments
+    - Collections
+    - Documents
+    - Notifications
+    - Targets
+    - Master Data
+    - Reports
+    - Search
+    - Audit Logs
+
+    Roles:
+    - ADMIN: Full system access
+    - MANAGER: Own team scope
+    - TL: Own telecaller scope
+    - TELECALLER: Own assigned leads
+
+servers:
+  - url: http://localhost:5000
+    description: Local Development Server
+
+tags:
+
+  - name: Auth
+    description: Authentication APIs
+
+  - name: Users
+    description: User management APIs
+
+  - name: Teams
+    description: Team management APIs
+
+  - name: Leads
+    description: Lead management APIs
+
+  - name: Calls
+    description: Call management APIs
+
+  - name: Follow-ups
+    description: Lead follow-up APIs
+
+  - name: Applications
+    description: Loan application APIs
+
+  - name: Lenders
+    description: Lender management APIs
+
+  - name: Loans
+    description: Loan account APIs
+
+  - name: Repayments
+    description: EMI and repayment APIs
+
+  - name: Collections
+    description: Collection follow-up APIs
+
+  - name: Documents
+    description: Document and KYC APIs
+
+  - name: Notifications
+    description: Notification APIs
+
+  - name: Targets
+    description: Telecaller target APIs
+
+  - name: Master Data
+    description: Master data APIs
+
+  - name: Reports
+    description: CRM and financial reports
+
+  - name: Search
+    description: Global CRM search APIs
+
+  - name: Audit Logs
+    description: System audit log APIs
+
+paths:
+
+  # ====================================================
+  # AUTH
+  # ====================================================
+
+  /api/auth/login:
+
+    post:
+
+      tags:
+        - Auth
+
+      summary: Login user
+
+      description: |
+        Authenticate a FinBoat CRM user and return a JWT token.
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/json:
+
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+
+      responses:
+
+        "200":
+          description: Login successful
+
+          content:
+
+            application/json:
+
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+
+        "400":
+          description: Validation failed
+
+        "401":
+          description: Invalid credentials
+
+
+  # ====================================================
+  # USERS
+  # ====================================================
+
+  /api/users:
+
+    post:
+
+      tags:
+        - Users
+
+      summary: Create user
+
+      security:
+        - bearerAuth: []
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/json:
+
+            schema:
+              $ref: "#/components/schemas/CreateUserRequest"
+
+      responses:
+
+        "201":
+          description: User created successfully
+
+          content:
+
+            application/json:
+
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+        "400":
+          description: Validation failed
+
+        "401":
+          description: Authentication required
+
+        "403":
+          description: Forbidden
+
+
+    get:
+
+      tags:
+        - Users
+
+      summary: Get users
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum:
+              - ADMIN
+              - MANAGER
+              - TL
+              - TELECALLER
+
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+
+      responses:
+
+        "200":
+          description: Users retrieved successfully
+
+        "401":
+          description: Authentication required
+
+
+  /api/users/{id}:
+
+    get:
+
+      tags:
+        - Users
+
+      summary: Get user by ID
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - $ref: "#/components/parameters/Id"
+
+      responses:
+
+        "200":
+          description: User retrieved successfully
+
+        "404":
+          description: User not found
+
+
+  # ====================================================
+  # TEAMS
+  # ====================================================
+
+  /api/teams:
+
+    post:
+
+      tags:
+        - Teams
+
+      summary: Create team
+
+      security:
+        - bearerAuth: []
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/json:
+
+            schema:
+              $ref: "#/components/schemas/CreateTeamRequest"
+
+      responses:
+
+        "201":
+          description: Team created successfully
+
+        "400":
+          description: Validation failed
+
+        "401":
+          description: Authentication required
+
+        "403":
+          description: Forbidden
+
+
+    get:
+
+      tags:
+        - Teams
+
+      summary: Get teams
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        "200":
+          description: Teams retrieved successfully
+
+        "401":
+          description: Authentication required
+
+
+  # ====================================================
+  # LEADS
+  # ====================================================
+paths:
+
+  /api/leads:
+
+    post:
+
+      tags:
+        - Leads
+
+      summary: Create a new lead
+
+      description: Create a new CRM lead.
+
+      security:
+        - bearerAuth: []
+
+      requestBody:
+        required: true
+
+        content:
+
+          application/json:
+
+            schema:
+              $ref: "#/components/schemas/CreateLeadRequest"
+
+      responses:
+
+        "201":
+          description: Lead created successfully
+
+          content:
+            application/json:
+
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+        "400":
+          description: Validation failed
+
+          content:
+            application/json:
+
+              schema:
+                $ref: "#/components/schemas/ValidationError"
+
+        "401":
+          description: Authentication required
+
+        "403":
+          description: Forbidden
+
+        "409":
+          description: Duplicate lead
+
+  /api/leads/{id}:  
+    get:
+
+      tags:
+        - Leads
+
+      summary: Get leads
+
+      description: Get paginated leads with optional filters.
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - name: search
+          in: query
+          description: Search by customer name or mobile
+          schema:
+            type: string
+            example: Rahul
+
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - NEW
+              - INTERESTED
+              - DOCUMENTS_PENDING
+              - LOGIN
+              - APPROVED
+              - DISBURSED
+              - REJECTED
+
+        - name: loanType
+          in: query
+          schema:
+            type: string
+            example: PERSONAL
+
+        - name: source
+          in: query
+          schema:
+            type: string
+            example: WEBSITE
+
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+
+      responses:
+
+        "200":
+          description: Leads retrieved successfully
+
+          content:
+            application/json:
+
+              schema:
+                type: object
+
+                properties:
+
+                  success:
+                    type: boolean
+                    example: true
+
+                  message:
+                    type: string
+                    example: Leads retrieved successfully
+
+                  data:
+                    type: object
+
+                    properties:
+
+                      leads:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Lead"
+
+                      pagination:
+                        $ref: "#/components/schemas/Pagination"
+
+        "401":
+          description: Authentication required
+
+        "403":
+          description: Forbidden
+
+  /api/leads/{id}:
+
+    get:
+
+      tags:
+        - Leads
+
+      summary: Get lead by ID
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - name: id
+          in: path
+          required: true
+
+          schema:
+            type: string
+
+          example: cm123abc
+
+      responses:
+
+        "200":
+          description: Lead retrieved successfully
+
+          content:
+            application/json:
+
+              schema:
+                type: object
+
+                properties:
+
+                  success:
+                    type: boolean
+                    example: true
+
+                  message:
+                    type: string
+                    example: Lead retrieved successfully
+
+                  data:
+                    $ref: "#/components/schemas/Lead"
+
+        "401":
+          description: Authentication required
+
+        "404":
+          description: Lead not found
+
+  /api/leads/{id}/assign:
+
+    patch:
+
+      tags:
+        - Leads
+
+      summary: Assign or reassign lead
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - $ref: "#/components/parameters/Id"
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/json:
+
+            schema:
+              $ref: "#/components/schemas/AssignLeadRequest"
+
+      responses:
+
+        "200":
+          description: Lead assigned successfully
+
+        "400":
+          description: Invalid assignment
+
+        "404":
+          description: Lead or target user not found
+
+
+  /api/leads/{id}/status:
+
+    patch:
+
+      tags:
+        - Leads
+
+      summary: Change lead status
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - $ref: "#/components/parameters/Id"
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/json:
+
+            schema:
+              $ref: "#/components/schemas/ChangeLeadStatusRequest"
+
+      responses:
+
+        "200":
+          description: Lead status changed successfully
+
+        "400":
+          description: Invalid status
+
+        "404":
+          description: Lead not found
+
+
+  /api/leads/{id}/transfers:
+
+    get:
+
+      tags:
+        - Leads
+
+      summary: Get lead transfer history
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - $ref: "#/components/parameters/Id"
+
+      responses:
+
+        "200":
+          description: Transfer history retrieved successfully
+
+        "404":
+          description: Lead not found
+
+
+  # ====================================================
+  # CALLS
+  # ====================================================
+
+  /api/calls:
+
+    post:
+
+      tags:
+        - Calls
+
+      summary: Create call log
+
+      security:
+        - bearerAuth: []
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/json:
+
+            schema:
+              $ref: "#/components/schemas/CreateCallRequest"
+
+      responses:
+
+        "201":
+          description: Call log created successfully
+
+        "400":
+          description: Validation failed
+
+        "401":
+          description: Authentication required
+
+
+    get:
+
+      tags:
+        - Calls
+
+      summary: Get call logs
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - name: leadId
+          in: query
+          schema:
+            type: string
+
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum:
+              - CONNECTED
+              - NOT_CONNECTED
+              - BUSY
+              - WRONG_NUMBER
+
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+
+      responses:
+
+        "200":
+          description: Call logs retrieved successfully
+
+
+  # ====================================================
+  # FOLLOW UPS
+  # ====================================================
+
+  /api/followups/{leadId}:
+
+    post:
+
+      tags:
+        - Follow-ups
+
+      summary: Create lead follow-up
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - name: leadId
+          in: path
+          required: true
+          schema:
+            type: string
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/json:
+
+            schema:
+              $ref: "#/components/schemas/CreateFollowUpRequest"
+
+      responses:
+
+        "201":
+          description: Follow-up created successfully
+
+        "400":
+          description: Validation failed
+
+        "404":
+          description: Lead not found
+
+
+  /api/followups/{id}:
+
+    patch:
+
+      tags:
+        - Follow-ups
+
+      summary: Update follow-up
+
+      description: |
+        Update follow-up status and notes.
+
+        Example status:
+        DONE
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - $ref: "#/components/parameters/Id"
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/json:
+
+            schema:
+              $ref: "#/components/schemas/UpdateFollowUpRequest"
+
+      responses:
+
+        "200":
+          description: Follow-up updated successfully
+
+        "400":
+          description: Validation failed
+
+        "404":
+          description: Follow-up not found
+
+
+  /api/followups/pending:
+
+    get:
+
+      tags:
+        - Follow-ups
+
+      summary: Get pending follow-ups
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        "200":
+          description: Pending follow-ups retrieved successfully
+
+
+  /api/followups/overdue:
+
+    get:
+
+      tags:
+        - Follow-ups
+
+      summary: Get overdue follow-ups
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        "200":
+          description: Overdue follow-ups retrieved successfully
+
+
+  /api/followups/summary:
+
+    get:
+
+      tags:
+        - Follow-ups
+
+      summary: Get follow-up summary
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        "200":
+          description: Follow-up summary retrieved successfully
+
+
+  # ====================================================
+  # APPLICATIONS
+  # ====================================================
+
+  /api/applications/leads/{leadId}:
+
+    post:
+
+      tags:
+        - Applications
+
+      summary: Create application for lead
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - name: leadId
+          in: path
+          required: true
+          schema:
+            type: string
+
+      requestBody:
+
+        required: false
+
+        content:
+
+          application/json:
+
+            schema:
+              $ref: "#/components/schemas/CreateApplicationRequest"
+
+      responses:
+
+        "201":
+          description: Application created successfully
+
+        "400":
+          description: Invalid application
+
+        "404":
+          description: Lead not found
+
+        "409":
+          description: Active application already exists
+
+
+  /api/applications:
+
+    get:
+
+      tags:
+        - Applications
+
+      summary: Get applications
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - name: status
+          in: query
+          schema:
+            type: string
+
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+
+      responses:
+
+        "200":
+          description: Applications retrieved successfully
+
+
+  /api/applications/{id}:
+
+    get:
+
+      tags:
+        - Applications
+
+      summary: Get application by ID
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - $ref: "#/components/parameters/Id"
+
+      responses:
+
+        "200":
+          description: Application retrieved successfully
+
+        "404":
+          description: Application not found
+
+
+    patch:
+
+      tags:
+        - Applications
+
+      summary: Update application
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - $ref: "#/components/parameters/Id"
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/json:
+
+            schema:
+              type: object
+
+      responses:
+
+        "200":
+          description: Application updated successfully
+
+
+  /api/applications/{id}/status:
+
+    patch:
+
+      tags:
+        - Applications
+
+      summary: Change application status
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - $ref: "#/components/parameters/Id"
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/json:
+
+            schema:
+              $ref: "#/components/schemas/ChangeApplicationStatusRequest"
+
+      responses:
+
+        "200":
+          description: Application status changed successfully
+
+        "400":
+          description: Invalid status transition
+
+
+  /api/applications/{id}/timeline:
+
+    get:
+
+      tags:
+        - Applications
+
+      summary: Get application timeline
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - $ref: "#/components/parameters/Id"
+
+      responses:
+
+        "200":
+          description: Application timeline retrieved successfully
+
+
+  /api/applications/{id}/status-history:
+
+    get:
+
+      tags:
+        - Applications
+
+      summary: Get application status history
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - $ref: "#/components/parameters/Id"
+
+      responses:
+
+        "200":
+          description: Application status history retrieved successfully
+
+
+  # ====================================================
+  # LENDERS
+  # ====================================================
+
+  /api/lenders:
+
+    post:
+
+      tags:
+        - Lenders
+
+      summary: Create lender
+
+      security:
+        - bearerAuth: []
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/json:
+
+            schema:
+              $ref: "#/components/schemas/CreateLenderRequest"
+
+      responses:
+
+        "201":
+          description: Lender created successfully
+
+        "400":
+          description: Validation failed
+
+        "403":
+          description: Admin access required
+
+
+    get:
+
+      tags:
+        - Lenders
+
+      summary: Get lenders
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        "200":
+          description: Lenders retrieved successfully
+
+
+  # ====================================================
+  # LOANS
+  # ====================================================
+
+  /api/loans/applications/{applicationId}/convert:
+
+    post:
+
+      tags:
+        - Loans
+
+      summary: Convert application into loan
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - name: applicationId
+          in: path
+          required: true
+          schema:
+            type: string
+
+      requestBody:
+
+        required: false
+
+        content:
+
+          application/json:
+
+            schema:
+              $ref: "#/components/schemas/ConvertLoanRequest"
+
+      responses:
+
+        "201":
+          description: Loan created successfully
+
+        "400":
+          description: Conversion failed
+
+        "404":
+          description: Application not found
+
+
+  /api/loans:
+
+    get:
+
+      tags:
+        - Loans
+
+      summary: Get loans
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - name: status
+          in: query
+          schema:
+            type: string
+
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+
+      responses:
+
+        "200":
+          description: Loans retrieved successfully
+
+
+  /api/loans/{id}:
+
+    get:
+
+      tags:
+        - Loans
+
+      summary: Get loan by ID
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - $ref: "#/components/parameters/Id"
+
+      responses:
+
+        "200":
+          description: Loan retrieved successfully
+
+        "404":
+          description: Loan not found
+
+
+  /api/loans/{id}/status:
+
+    patch:
+
+      tags:
+        - Loans
+
+      summary: Change loan status
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - $ref: "#/components/parameters/Id"
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/json:
+
+            schema:
+
+              type: object
+
+              required:
+                - status
+
+              properties:
+
+                status:
+                  type: string
+                  example: ACTIVE
+
+      responses:
+
+        "200":
+          description: Loan status updated successfully
+
+
+  # ====================================================
+  # EMI
+  # ====================================================
+
+  /api/loans/{loanAccountId}/emi-schedule:
+
+    post:
+
+      tags:
+        - Repayments
+
+      summary: Create EMI schedule
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - name: loanAccountId
+          in: path
+          required: true
+          schema:
+            type: string
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/json:
+
+            schema:
+              $ref: "#/components/schemas/CreateEmiScheduleRequest"
+
+      responses:
+
+        "201":
+          description: EMI schedule created successfully
+
+        "400":
+          description: Validation failed
+
+
+    get:
+
+      tags:
+        - Repayments
+
+      summary: Get EMI schedule
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - name: loanAccountId
+          in: path
+          required: true
+          schema:
+            type: string
+
+      responses:
+
+        "200":
+          description: EMI schedule retrieved successfully
+
+
+  /api/loans/{loanAccountId}/repayments:
+
+    post:
+
+      tags:
+        - Repayments
+
+      summary: Record repayment
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - name: loanAccountId
+          in: path
+          required: true
+          schema:
+            type: string
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/json:
+
+            schema:
+              $ref: "#/components/schemas/CreateRepaymentRequest"
+
+      responses:
+
+        "201":
+          description: Repayment recorded successfully
+
+        "400":
+          description: Validation failed
+
+
+  /api/loans/{loanAccountId}/repayment-summary:
+
+    get:
+
+      tags:
+        - Repayments
+
+      summary: Get repayment summary
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - name: loanAccountId
+          in: path
+          required: true
+          schema:
+            type: string
+
+      responses:
+
+        "200":
+          description: Repayment summary retrieved successfully
+
+
+  # ====================================================
+  # COLLECTIONS
+  # ====================================================
+
+  /api/loans/{loanAccountId}/followups:
+
+    post:
+
+      tags:
+        - Collections
+
+      summary: Create collection follow-up
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - name: loanAccountId
+          in: path
+          required: true
+          schema:
+            type: string
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/json:
+
+            schema:
+              $ref: "#/components/schemas/CreateCollectionFollowUpRequest"
+
+      responses:
+
+        "201":
+          description: Collection follow-up created successfully
+
+
+  /api/collection-followups:
+
+    get:
+
+      tags:
+        - Collections
+
+      summary: Get collection follow-ups
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        "200":
+          description: Collection follow-ups retrieved successfully
+
+
+  /api/collection-followups/{id}:
+
+    patch:
+
+      tags:
+        - Collections
+
+      summary: Update collection follow-up
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - $ref: "#/components/parameters/Id"
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/json:
+
+            schema:
+              type: object
+
+      responses:
+
+        "200":
+          description: Collection follow-up updated successfully
+
+
+  /api/collection-summary:
+
+    get:
+
+      tags:
+        - Collections
+
+      summary: Get collection summary
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        "200":
+          description: Collection summary retrieved successfully
+
+
+  # ====================================================
+  # DOCUMENTS
+  # ====================================================
+
+  /api/documents/lead/{leadId}:
+
+    post:
+
+      tags:
+        - Documents
+
+      summary: Upload lead document
+
+      description: |
+        Upload a document for a lead.
+
+        Supported multipart form fields:
+        - file
+        - applicationId
+        - documentType
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - name: leadId
+          in: path
+          required: true
+          schema:
+            type: string
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          multipart/form-data:
+
+            schema:
+
+              type: object
+
+              required:
+                - file
+                - documentType
+
+              properties:
+
+                file:
+                  type: string
+                  format: binary
+
+                applicationId:
+                  type: string
+                  nullable: true
+
+                documentType:
+                  type: string
+                  example: PAN
+
+      responses:
+
+        "201":
+          description: Document uploaded successfully
+
+        "400":
+          description: Invalid document
+
+        "401":
+          description: Authentication required
+
+
+  /api/documents/{id}:
+
+    get:
+
+      tags:
+        - Documents
+
+      summary: Get document by ID
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - $ref: "#/components/parameters/Id"
+
+      responses:
+
+        "200":
+          description: Document retrieved successfully
+
+        "404":
+          description: Document not found
+
+
+    delete:
+
+      tags:
+        - Documents
+
+      summary: Delete document
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - $ref: "#/components/parameters/Id"
+
+      responses:
+
+        "200":
+          description: Document deleted successfully
+
+
+  /api/documents/{id}/file:
+
+    get:
+
+      tags:
+        - Documents
+
+      summary: Get document file
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - $ref: "#/components/parameters/Id"
+
+      responses:
+
+        "200":
+          description: Document file
+
+
+  /api/documents/{id}/status:
+
+    patch:
+
+      tags:
+        - Documents
+
+      summary: Update document status
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - $ref: "#/components/parameters/Id"
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/json:
+
+            schema:
+              $ref: "#/components/schemas/DocumentStatusRequest"
+
+      responses:
+
+        "200":
+          description: Document status updated successfully
+
+
+  # ====================================================
+  # NOTIFICATIONS
+  # ====================================================
+
+  /api/notifications:
+
+    get:
+
+      tags:
+        - Notifications
+
+      summary: Get notifications
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        "200":
+          description: Notifications retrieved successfully
+
+
+  /api/notifications/unread-count:
+
+    get:
+
+      tags:
+        - Notifications
+
+      summary: Get unread notification count
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        "200":
+          description: Unread count retrieved successfully
+
+
+  /api/notifications/{id}/read:
+
+    patch:
+
+      tags:
+        - Notifications
+
+      summary: Mark notification as read
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - $ref: "#/components/parameters/Id"
+
+      responses:
+
+        "200":
+          description: Notification marked as read
+
+
+  /api/notifications/read-all:
+
+    patch:
+
+      tags:
+        - Notifications
+
+      summary: Mark all notifications as read
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        "200":
+          description: Notifications marked as read
+
+
+  /api/notifications/preferences:
+
+    get:
+
+      tags:
+        - Notifications
+
+      summary: Get notification preferences
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        "200":
+          description: Notification preferences retrieved successfully
+
+
+    patch:
+
+      tags:
+        - Notifications
+
+      summary: Update notification preferences
+
+      security:
+        - bearerAuth: []
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/json:
+
+            schema:
+              type: object
+
+      responses:
+
+        "200":
+          description: Notification preferences updated successfully
+
+
+  # ====================================================
+  # TARGETS
+  # ====================================================
+
+  /api/targets:
+
+    post:
+
+      tags:
+        - Targets
+
+      summary: Create telecaller target
+
+      description: |
+        Create a monthly target for a telecaller.
+
+        Example period:
+        2026-09
+
+      security:
+        - bearerAuth: []
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/json:
+
+            schema:
+              $ref: "#/components/schemas/CreateTargetRequest"
+
+      responses:
+
+        "201":
+          description: Target created successfully
+
+        "400":
+          description: Validation failed
+
+        "403":
+          description: Only ADMIN or MANAGER can create targets
+
+        "404":
+          description: Target user not found
+
+
+    get:
+
+      tags:
+        - Targets
+
+      summary: Get targets
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - name: period
+          in: query
+          schema:
+            type: string
+            example: 2026-09
+
+        - name: userId
+          in: query
+          schema:
+            type: string
+
+      responses:
+
+        "200":
+          description: Targets retrieved successfully
+
+
+  # ====================================================
+  # MASTER DATA
+  # ====================================================
+
+  /api/master-data:
+
+    post:
+
+      tags:
+        - Master Data
+
+      summary: Create master data
+
+      description: Admin can create or update master data.
+
+      security:
+        - bearerAuth: []
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/json:
+
+            schema:
+              $ref: "#/components/schemas/MasterDataRequest"
+
+      responses:
+
+        "201":
+          description: Master data created successfully
+
+        "400":
+          description: Validation failed
+
+        "403":
+          description: Admin access required
+
+
+    get:
+
+      tags:
+        - Master Data
+
+      summary: Get master data
+
+      description: All authenticated users can read master data.
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        "200":
+          description: Master data retrieved successfully
+
+
+  /api/master-data/{id}:
+
+    get:
+
+      tags:
+        - Master Data
+
+      summary: Get master data by ID
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - $ref: "#/components/parameters/Id"
+
+      responses:
+
+        "200":
+          description: Master data retrieved successfully
+
+
+    patch:
+
+      tags:
+        - Master Data
+
+      summary: Update master data
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - $ref: "#/components/parameters/Id"
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/json:
+
+            schema:
+              $ref: "#/components/schemas/MasterDataRequest"
+
+      responses:
+
+        "200":
+          description: Master data updated successfully
+
+
+  /api/master-data/{id}/status:
+
+    patch:
+
+      tags:
+        - Master Data
+
+      summary: Activate or deactivate master data
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - $ref: "#/components/parameters/Id"
+
+      requestBody:
+
+        required: true
+
+        content:
+
+          application/json:
+
+            schema:
+
+              type: object
+
+              required:
+                - isActive
+
+              properties:
+
+                isActive:
+                  type: boolean
+                  example: true
+
+      responses:
+
+        "200":
+          description: Master data status updated successfully
+
+
+  # ====================================================
+  # SEARCH
+  # ====================================================
+
+  /api/search:
+
+    get:
+
+      tags:
+        - Search
+
+      summary: Global CRM search
+
+      description: Search leads, applications, loans and customers.
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "9876543210"
+
+      responses:
+
+        "200":
+          description: Search results retrieved successfully
+
+        "400":
+          description: Search query required
+
+
+  # ====================================================
+  # REPORTS
+  # ====================================================
+
+  /api/reports/summary:
+
+    get:
+
+      tags:
+        - Reports
+
+      summary: CRM summary report
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        "200":
+          description: Summary report retrieved successfully
+
+
+  /api/reports/telecaller-performance:
+
+    get:
+
+      tags:
+        - Reports
+
+      summary: Telecaller performance report
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+
+      responses:
+
+        "200":
+          description: Telecaller performance retrieved successfully
+
+
+  /api/reports/pending-followups:
+
+    get:
+
+      tags:
+        - Reports
+
+      summary: Pending follow-up report
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        "200":
+          description: Pending follow-up report retrieved successfully
+
+
+  /api/reports/lead-conversion:
+
+    get:
+
+      tags:
+        - Reports
+
+      summary: Lead conversion report
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        "200":
+          description: Lead conversion report retrieved successfully
+
+
+  /api/reports/financial-summary:
+
+    get:
+
+      tags:
+        - Reports
+
+      summary: Financial summary report
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        "200":
+          description: Financial summary retrieved successfully
+
+
+  /api/reports/collection-performance:
+
+    get:
+
+      tags:
+        - Reports
+
+      summary: Collection performance report
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        "200":
+          description: Collection performance retrieved successfully
+
+
+  /api/reports/lender-collection:
+
+    get:
+
+      tags:
+        - Reports
+
+      summary: Lender collection report
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        "200":
+          description: Lender collection retrieved successfully
+
+
+  /api/reports/monthly-collection:
+
+    get:
+
+      tags:
+        - Reports
+
+      summary: Monthly collection report
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - name: month
+          in: query
+          schema:
+            type: string
+          example: 2026-09
+
+      responses:
+
+        "200":
+          description: Monthly collection retrieved successfully
+
+
+  /api/reports/telecaller-collection:
+
+    get:
+
+      tags:
+        - Reports
+
+      summary: Telecaller collection report
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        "200":
+          description: Telecaller collection retrieved successfully
+
+
+  /api/reports/lender-performance:
+
+    get:
+
+      tags:
+        - Reports
+
+      summary: Lender performance report
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        "200":
+          description: Lender performance retrieved successfully
+
+
+  # ====================================================
+  # EXPORT
+  # ====================================================
+
+  /api/leads/export:
+
+    get:
+
+      tags:
+        - Reports
+
+      summary: Export leads
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        "200":
+          description: Leads exported successfully
+
+          content:
+
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+
+
+  /api/leads/export/csv:
+
+    get:
+
+      tags:
+        - Reports
+
+      summary: Export leads as CSV
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        "200":
+          description: CSV export
+
+          content:
+
+            text/csv:
+              schema:
+                type: string
+
+
+  /api/applications/export:
+
+    get:
+
+      tags:
+        - Reports
+
+      summary: Export applications
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        "200":
+          description: Applications exported successfully
+
+          content:
+
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+
+
+  /api/loans/export:
+
+    get:
+
+      tags:
+        - Reports
+
+      summary: Export loans
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        "200":
+          description: Loans exported successfully
+
+          content:
+
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+
+
+  /api/audit-logs/export:
+
+    get:
+
+      tags:
+        - Audit Logs
+
+      summary: Export audit logs
+
+      security:
+        - bearerAuth: []
+
+      responses:
+
+        "200":
+          description: Audit logs exported successfully
+
+          content:
+
+            text/csv:
+              schema:
+                type: string
+
+
+  # ====================================================
+  # AUDIT LOGS
+  # ====================================================
+
+  /api/audit-logs:
+
+    get:
+
+      tags:
+        - Audit Logs
+
+      summary: Get audit logs
+
+      security:
+        - bearerAuth: []
+
+      parameters:
+
+        - name: userId
+          in: query
+          schema:
+            type: string
+
+        - name: action
+          in: query
+          schema:
+            type: string
+
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+
+      responses:
+
+        "200":
+          description: Audit logs retrieved successfully
+
+        "401":
+          description: Authentication required
+
+
+  # ====================================================
+  # COMPONENTS
+  # ====================================================
+
+components:
+
+  securitySchemes:
+
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Enter JWT token
+
+  schemas:
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+
+        message:
+          type: string
+          example: Operation successful
+
+        data:
+          nullable: true
+          example: {}
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+
+        message:
+          type: string
+          example: Something went wrong
+
+    ValidationError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+
+        message:
+          type: string
+          example: Validation failed
+
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+                example: mobile
+
+              message:
+                type: string
+                example: Mobile must be 10 digits
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+
+        limit:
+          type: integer
+          example: 20
+
+        total:
+          type: integer
+          example: 100
+
+        totalPages:
+          type: integer
+          example: 5
+
+    Lead:
+      type: object
+      properties:
+
+        id:
+          type: string
+          example: cm123abc
+
+        customerName:
+          type: string
+          example: Rahul Kumar
+
+        mobile:
+          type: string
+          example: "9876543210"
+
+        loanType:
+          type: string
+          example: PERSONAL
+
+        loanAmount:
+          type: number
+          example: 500000
+
+        source:
+          type: string
+          example: WEBSITE
+
+        status:
+          type: string
+          example: NEW
+
+        assignedToId:
+          type: string
+          nullable: true
+          example: cm456user
+
+        assignedTeamId:
+          type: string
+          nullable: true
+          example: cm789team
+
+        isDuplicate:
+          type: boolean
+          example: false
+
+        duplicateOf:
+          type: string
+          nullable: true
+          example: null
+
+        createdAt:
+          type: string
+          format: date-time
+
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateLeadRequest:
+      type: object
+
+      required:
+        - customerName
+        - mobile
+        - loanType
+        - loanAmount
+
+      properties:
+
+        customerName:
+          type: string
+          example: Rahul Kumar
+
+        mobile:
+          type: string
+          example: "9876543210"
+
+        loanType:
+          type: string
+          example: PERSONAL
+
+        loanAmount:
+          type: number
+          example: 500000
+
+        source:
+          type: string
+          example: WEBSITE
+
+        assignedToId:
+          type: string
+          nullable: true
+
+        assignedTeamId:
+          type: string
+          nullable: true
+
+    AssignLeadRequest:
+      type: object
+
+      required:
+        - toUserId
+
+      properties:
+
+        toUserId:
+          type: string
+          example: cm456user
+
+        toTeamId:
+          type: string
+          nullable: true
+          example: cm789team
+
+        reason:
+          type: string
+          example: Reassigned to senior telecaller
+
+    ChangeLeadStatusRequest:
+      type: object
+
+      required:
+        - status
+
+      properties:
+
+        status:
+          type: string
+          enum:
+            - NEW
+            - INTERESTED
+            - DOCUMENTS_PENDING
+            - LOGIN
+            - APPROVED
+            - DISBURSED
+            - REJECTED
+          example: INTERESTED
+
+        note:
+          type: string
+          example: Customer interested in personal loan
+
+    LoginRequest:
+      type: object
+
+      required:
+        - email
+        - password
+
+      properties:
+
+        email:
+          type: string
+          format: email
+          example: admin@finboat.com
+
+        password:
+          type: string
+          format: password
+          example: Password@123
+
+    LoginResponse:
+      type: object
+      properties:
+
+        success:
+          type: boolean
+          example: true
+
+        message:
+          type: string
+          example: Login successful
+
+        data:
+          type: object
+          properties:
+
+            token:
+              type: string
+              example: eyJhbGciOiJIUzI1NiIs...
+
+            user:
+              type: object
+              properties:
+
+                id:
+                  type: string
+                  example: cm123user
+
+                name:
+                  type: string
+                  example: Admin User
+
+                email:
+                  type: string
+                  example: admin@finboat.com
+
+                role:
+                  type: string
+                  example: ADMIN
+
+  # ====================================================
+  # PARAMETERS
+  # ====================================================
+
+  parameters:
+
+    Id:
+
+      name: id
+
+      in: path
+
+      required: true
+
+      description: Resource ID
+
+      schema:
+        type: string
+
+      example: cm123abc
+
+
+  # ====================================================
+  # SCHEMAS
+  # ====================================================
+
+  schemas:
+
+    # ==================================================
+    # LEAD
+    # ==================================================
+
+    Lead:
+
+      type: object
+
+      properties:
+
+        id:
+          type: string
+          example: cm123abc
+
+        customerName:
+          type: string
+          example: Rahul Kumar
+
+        mobile:
+          type: string
+          example: "9876543210"
+
+        loanType:
+          type: string
+          example: PERSONAL
+
+        loanAmount:
+          type: number
+          format: double
+          example: 500000
+
+        source:
+          type: string
+          example: WEBSITE
+
+        status:
+          type: string
+          enum:
+            - NEW
+            - INTERESTED
+            - DOCUMENTS_PENDING
+            - LOGIN
+            - APPROVED
+            - DISBURSED
+            - REJECTED
+          example: NEW
+
+        assignedToId:
+          type: string
+          nullable: true
+          example: cmtelecaller123
+
+        assignedTeamId:
+          type: string
+          nullable: true
+          example: cmteam123
+
+        isDuplicate:
+          type: boolean
+          example: false
+
+        duplicateOf:
+          type: string
+          nullable: true
+
+        createdAt:
+          type: string
+          format: date-time
+
+        updatedAt:
+          type: string
+          format: date-time
+
+
+    CreateLeadRequest:
+
+      type: object
+
+      required:
+        - customerName
+        - mobile
+        - loanType
+        - loanAmount
+
+      properties:
+
+        customerName:
+          type: string
+          example: Rahul Kumar
+
+        mobile:
+          type: string
+          minLength: 10
+          maxLength: 10
+          example: "9876543210"
+
+        loanType:
+          type: string
+          example: PERSONAL
+
+        loanAmount:
+          type: number
+          format: double
+          example: 500000
+
+        source:
+          type: string
+          example: WEBSITE
+
+        assignedToId:
+          type: string
+          nullable: true
+
+        assignedTeamId:
+          type: string
+          nullable: true
+
+
+    UpdateLeadRequest:
+
+      type: object
+
+      properties:
+
+        customerName:
+          type: string
+
+        mobile:
+          type: string
+
+        loanType:
+          type: string
+
+        loanAmount:
+          type: number
+
+        source:
+          type: string
+
+
+    AssignLeadRequest:
+
+      type: object
+
+      required:
+        - toUserId
+
+      properties:
+
+        toUserId:
+          type: string
+          example: cmtelecaller123
+
+        toTeamId:
+          type: string
+          nullable: true
+          example: cmteam123
+
+        reason:
+          type: string
+          example: Reassigned due to workload
+
+
+    ChangeLeadStatusRequest:
+
+      type: object
+
+      required:
+        - status
+
+      properties:
+
+        status:
+          type: string
+          enum:
+            - NEW
+            - INTERESTED
+            - DOCUMENTS_PENDING
+            - LOGIN
+            - APPROVED
+            - DISBURSED
+            - REJECTED
+          example: INTERESTED
+
+        note:
+          type: string
+          example: Customer interested in loan
+
+
+    # ==================================================
+    # AUTH
+    # ==================================================
+
+    LoginRequest:
+
+      type: object
+
+      required:
+        - email
+        - password
+
+      properties:
+
+        email:
+          type: string
+          format: email
+          example: admin@finboat.com
+
+        password:
+          type: string
+          format: password
+          example: Password@123
+
+
+    LoginResponse:
+
+      type: object
+
+      properties:
+
+        success:
+          type: boolean
+          example: true
+
+        message:
+          type: string
+          example: Login successful
+
+        data:
+
+          type: object
+
+          properties:
+
+            token:
+              type: string
+              example: eyJhbGciOiJIUzI1NiIs...
+
+            user:
+              $ref: "#/components/schemas/User"
+
+
+    # ==================================================
+    # USER
+    # ==================================================
+
+    User:
+
+      type: object
+
+      properties:
+
+        id:
+          type: string
+          example: cmuser123
+
+        name:
+          type: string
+          example: Admin User
+
+        email:
+          type: string
+          format: email
+          example: admin@finboat.com
+
+        role:
+          type: string
+          enum:
+            - ADMIN
+            - MANAGER
+            - TL
+            - TELECALLER
+          example: ADMIN
+
+        managerId:
+          type: string
+          nullable: true
+
+        tlId:
+          type: string
+          nullable: true
+
+        isActive:
+          type: boolean
+          example: true
+
+        createdAt:
+          type: string
+          format: date-time
+
+
+    CreateUserRequest:
+
+      type: object
+
+      required:
+        - name
+        - email
+        - password
+        - role
+
+      properties:
+
+        name:
+          type: string
+          example: Rahul Sharma
+
+        email:
+          type: string
+          format: email
+          example: rahul@finboat.com
+
+        password:
+          type: string
+          format: password
+          example: Password@123
+
+        role:
+          type: string
+          enum:
+            - ADMIN
+            - MANAGER
+            - TL
+            - TELECALLER
+
+        managerId:
+          type: string
+          nullable: true
+
+        tlId:
+          type: string
+          nullable: true
+
+
+    # ==================================================
+    # TEAM
+    # ==================================================
+
+    CreateTeamRequest:
+
+      type: object
+
+      required:
+        - name
+
+      properties:
+
+        name:
+          type: string
+          example: Delhi Sales Team
+
+        description:
+          type: string
+          example: Personal loan sales team
+
+
+    # ==================================================
+    # CALL
+    # ==================================================
+
+    CreateCallRequest:
+
+      type: object
+
+      required:
+        - leadId
+        - status
+
+      properties:
+
+        leadId:
+          type: string
+          example: cmlead123
+
+        status:
+          type: string
+          enum:
+            - CONNECTED
+            - NOT_CONNECTED
+            - BUSY
+            - WRONG_NUMBER
+          example: CONNECTED
+
+        notes:
+          type: string
+          example: Customer requested callback tomorrow
+
+        duration:
+          type: integer
+          nullable: true
+          example: 180
+
+
+    # ==================================================
+    # FOLLOW UP
+    # ==================================================
+
+    CreateFollowUpRequest:
+
+      type: object
+
+      required:
+        - followUpDate
+
+      properties:
+
+        followUpDate:
+          type: string
+          format: date-time
+          example: 2026-09-15T10:30:00Z
+
+        notes:
+          type: string
+          example: Customer will submit documents
+
+
+    UpdateFollowUpRequest:
+
+      type: object
+
+      properties:
+
+        status:
+          type: string
+          enum:
+            - PENDING
+            - DONE
+            - MISSED
+          example: DONE
+
+        notes:
+          type: string
+          example: Customer submitted documents.
+
+
+    # ==================================================
+    # APPLICATION
+    # ==================================================
+
+    CreateApplicationRequest:
+
+      type: object
+
+      properties:
+
+        lenderId:
+          type: string
+          nullable: true
+
+        loanAmount:
+          type: number
+          example: 500000
+
+        notes:
+          type: string
+          nullable: true
+
+
+    ChangeApplicationStatusRequest:
+
+      type: object
+
+      required:
+        - status
+
+      properties:
+
+        status:
+          type: string
+          example: APPROVED
+
+        note:
+          type: string
+          example: Application approved by lender
+
+
+    # ==================================================
+    # LENDER
+    # ==================================================
+
+    CreateLenderRequest:
+
+      type: object
+
+      required:
+        - name
+
+      properties:
+
+        name:
+          type: string
+          example: HDFC Bank
+
+        code:
+          type: string
+          example: HDFC
+
+        description:
+          type: string
+          nullable: true
+
+
+    # ==================================================
+    # LOAN
+    # ==================================================
+
+    ConvertLoanRequest:
+
+      type: object
+
+      properties:
+
+        loanAccountNumber:
+          type: string
+          nullable: true
+          example: LN-2026-000123
+
+        interestRate:
+          type: number
+          example: 10.5
+
+        tenureMonths:
+          type: integer
+          example: 60
+
+
+    # ==================================================
+    # EMI
+    # ==================================================
+
+    CreateEmiScheduleRequest:
+
+      type: object
+
+      required:
+        - principalAmount
+        - interestRate
+        - tenureMonths
+        - firstDueDate
+
+      properties:
+
+        principalAmount:
+          type: number
+          example: 500000
+
+        interestRate:
+          type: number
+          example: 10.5
+
+        tenureMonths:
+          type: integer
+          example: 60
+
+        firstDueDate:
+          type: string
+          format: date
+          example: 2026-10-05
+
+
+    CreateRepaymentRequest:
+
+      type: object
+
+      required:
+        - amount
+        - paymentDate
+
+      properties:
+
+        amount:
+          type: number
+          example: 12500
+
+        paymentDate:
+          type: string
+          format: date
+          example: 2026-10-05
+
+        paymentMode:
+          type: string
+          example: UPI
+
+        referenceNumber:
+          type: string
+          nullable: true
+          example: UPI123456789
+
+
+    # ==================================================
+    # COLLECTION
+    # ==================================================
+
+    CreateCollectionFollowUpRequest:
+
+      type: object
+
+      required:
+        - followUpDate
+
+      properties:
+
+        followUpDate:
+          type: string
+          format: date-time
+          example: 2026-09-15T11:00:00Z
+
+        notes:
+          type: string
+          example: Customer promised payment tomorrow
+
+        status:
+          type: string
+          example: PENDING
+
+
+    # ==================================================
+    # DOCUMENT
+    # ==================================================
+
+    DocumentStatusRequest:
+
+      type: object
+
+      required:
+        - status
+
+      properties:
+
+        status:
+          type: string
+          enum:
+            - PENDING
+            - RECEIVED
+            - VERIFIED
+          example: VERIFIED
+
+        rejectionReason:
+          type: string
+          nullable: true
+          example: Document image is unclear
+
+
+    # ==================================================
+    # TARGET
+    # ==================================================
+
+    CreateTargetRequest:
+
+      type: object
+
+      required:
+        - userId
+        - period
+        - targetLeads
+        - targetDisbursement
+
+      properties:
+
+        userId:
+          type: string
+          example: cmtelecaller123
+
+        period:
+          type: string
+          description: Target month in YYYY-MM format
+          example: 2026-09
+
+        targetLeads:
+          type: integer
+          minimum: 0
+          example: 100
+
+        targetDisbursement:
+          type: integer
+          minimum: 0
+          example: 20
+
+
+    # ==================================================
+    # MASTER DATA
+    # ==================================================
+
+    MasterDataRequest:
+
+      type: object
+
+      required:
+        - type
+        - value
+
+      properties:
+
+        type:
+          type: string
+          example: LOAN_TYPE
+
+        value:
+          type: string
+          example: PERSONAL
+
+        label:
+          type: string
+          example: Personal Loan
+
+        isActive:
+          type: boolean
+          example: true
+
+
+    # ==================================================
+    # STANDARD RESPONSES
+    # ==================================================
+
+    SuccessResponse:
+
+      type: object
+
+      properties:
+
+        success:
+          type: boolean
+          example: true
+
+        message:
+          type: string
+          example: Operation successful
+
+        data:
+          type: object
+          additionalProperties: true
+
+
+    ValidationError:
+
+      type: object
+
+      properties:
+
+        success:
+          type: boolean
+          example: false
+
+        message:
+          type: string
+          example: Validation failed
+
+        errors:
+
+          type: array
+
+          items:
+
+            type: object
+
+            properties:
+
+              field:
+                type: string
+                example: mobile
+
+              message:
+                type: string
+                example: Mobile must be 10 digits
+
+
+    UnauthorizedError:
+
+      type: object
+
+      properties:
+
+        success:
+          type: boolean
+          example: false
+
+        message:
+          type: string
+          example: Authentication required
+
+
+    ForbiddenError:
+
+      type: object
+
+      properties:
+
+        success:
+          type: boolean
+          example: false
+
+        message:
+          type: string
+          example: You are not authorized to perform this action
+
+
+    NotFoundError:
+
+      type: object
+
+      properties:
+
+        success:
+          type: boolean
+          example: false
+
+        message:
+          type: string
+          example: Resource not found

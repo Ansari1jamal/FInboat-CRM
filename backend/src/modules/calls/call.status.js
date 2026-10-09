@@ -1,0 +1,10 @@
+const CALL_STATUS = {
+  CONNECTED: "CONNECTED",
+  NOT_CONNECTED: "NOT_CONNECTED",
+  BUSY: "BUSY",
+  WRONG_NUMBER: "WRONG_NUMBER",
+};
+
+module.exports = {
+  CALL_STATUS,
+};

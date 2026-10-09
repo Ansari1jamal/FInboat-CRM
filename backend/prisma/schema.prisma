@@ -1,0 +1,671 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                       String                     @id @default(uuid())
+  name                     String
+  email                    String                     @unique
+  phone                    String?
+  passwordHash             String
+  role                     UserRole
+  isActive                 Boolean                    @default(true)
+  managerId                String?
+  tlId                     String?
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime                   @updatedAt
+  applicationStatusChanges ApplicationStatusHistory[] @relation("ApplicationStatusChangedBy")
+  auditLogs                AuditLog[]
+  collectionFollowUps      CollectionFollowUp[]       @relation("CollectionFollowUpAssignedTo")
+  documentStatusChanges    DocumentStatusHistory[]    @relation("DocumentStatusChangedBy")
+  notifications            Notification[]
+  notificationPreference   NotificationPreference?
+  receivedRepayments       Repayment[]                @relation("RepaymentReceivedBy")
+  callLogs                 CallLog[]
+  uploadedDocuments        Document[]                 @relation("DocumentUploadedBy")
+  followUps                FollowUp[]
+  statusChanges            LeadStatusHistory[]
+  leadTransfersFrom        LeadTransfer[]             @relation("TransferFromUser")
+  leadTransfersTo          LeadTransfer[]             @relation("TransferToUser")
+  leadTransfersBy          LeadTransfer[]             @relation("TransferByUser")
+  assignedLeads            Lead[]                     @relation("AssignedLeads")
+  createdApplications      LoanApplication[]          @relation("ApplicationCreatedBy")
+  refreshTokens            RefreshToken[]
+  targets                  Target[]                   @relation("UserTargets")
+  managedTeams             Team[]                     @relation("ManagerTeams")
+  tlTeams                  Team[]                     @relation("TLTeams")
+  manager                  User?                      @relation("ManagerUsers", fields: [managerId], references: [id])
+  teamMembers              User[]                     @relation("ManagerUsers")
+  tl                       User?                      @relation("TLUsers", fields: [tlId], references: [id])
+  telecallers              User[]                     @relation("TLUsers")
+
+  @@index([role])
+  @@index([managerId])
+  @@index([tlId])
+  @@index([isActive])
+  @@map("users")
+}
+
+model Team {
+  id                String         @id @default(uuid())
+  name              String
+  managerId         String?
+  tlId              String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  transferFromTeams LeadTransfer[] @relation("TransferFromTeam")
+  transferToTeams   LeadTransfer[] @relation("TransferToTeam")
+  leads             Lead[]         @relation("LeadAssignedTeam")
+  targets           Target[]       @relation("TeamTargets")
+  manager           User?          @relation("ManagerTeams", fields: [managerId], references: [id])
+  tl                User?          @relation("TLTeams", fields: [tlId], references: [id])
+
+  @@index([managerId])
+  @@index([tlId])
+  @@map("teams")
+}
+
+model Lead {
+  id             String              @id @default(uuid())
+  customerName   String
+  mobile         String
+  email          String?
+  loanType       String
+  loanAmount     Decimal             @db.Decimal(15, 2)
+  source         String?
+  status         LeadStatus          @default(NEW)
+  assignedToId   String?
+  assignedTeamId String?
+  isDuplicate    Boolean             @default(false)
+  duplicateOfId  String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  notifications  Notification[]
+  callLogs       CallLog[]
+  documents      Document[]
+  followUps      FollowUp[]
+  statusHistory  LeadStatusHistory[]
+  transfers      LeadTransfer[]
+  assignedTeam   Team?               @relation("LeadAssignedTeam", fields: [assignedTeamId], references: [id])
+  assignedTo     User?               @relation("AssignedLeads", fields: [assignedToId], references: [id])
+  duplicateOf    Lead?               @relation("LeadDuplicates", fields: [duplicateOfId], references: [id])
+  duplicates     Lead[]              @relation("LeadDuplicates")
+  loan_accounts  LoanAccount[]
+  applications   LoanApplication[]
+
+  @@index([mobile])
+  @@index([status])
+  @@index([assignedToId])
+  @@index([assignedTeamId])
+  @@index([source])
+  @@index([createdAt])
+  @@index([assignedToId, status])
+  @@index([assignedToId, createdAt])
+  @@index([assignedTeamId, createdAt])
+  @@map("leads")
+}
+
+model CallLog {
+  id           String     @id @default(uuid())
+  leadId       String
+  telecallerId String
+  callStatus   CallStatus
+  remarks      String?
+  calledAt     DateTime   @default(now())
+  lead         Lead       @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  telecaller   User       @relation(fields: [telecallerId], references: [id])
+
+  @@index([leadId])
+  @@index([telecallerId])
+  @@index([calledAt])
+  @@map("call_logs")
+}
+
+model FollowUp {
+  id            String         @id @default(uuid())
+  leadId        String
+  scheduledBy   String
+  followUpDate  DateTime
+  followUpTime  String?
+  status        FollowUpStatus @default(PENDING)
+  notes         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  notifications Notification[]
+  lead          Lead           @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  scheduledUser User           @relation(fields: [scheduledBy], references: [id])
+
+  @@index([leadId])
+  @@index([scheduledBy])
+  @@index([followUpDate])
+  @@index([status])
+  @@index([status, followUpDate])
+  @@index([scheduledBy, status])
+  @@map("follow_ups")
+}
+
+model LeadStatusHistory {
+  id          String      @id @default(uuid())
+  leadId      String
+  changedBy   String
+  oldStatus   LeadStatus?
+  newStatus   LeadStatus
+  
+  note        String?
+
+  changedAt   DateTime    @default(now())
+  changedUser User        @relation(fields: [changedBy], references: [id])
+  lead        Lead        @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+  @@index([changedBy])
+  @@index([changedAt])
+  @@index([leadId, changedAt])
+  @@map("lead_status_history")
+}
+
+model LeadTransfer {
+  id              String   @id @default(uuid())
+  leadId          String
+  fromUserId      String?
+  toUserId        String
+  fromTeamId      String?
+  toTeamId        String?
+  transferredById String
+  reason          String?
+  transferredAt   DateTime @default(now())
+  fromTeam        Team?    @relation("TransferFromTeam", fields: [fromTeamId], references: [id])
+  fromUser        User?    @relation("TransferFromUser", fields: [fromUserId], references: [id])
+  lead            Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  toTeam          Team?    @relation("TransferToTeam", fields: [toTeamId], references: [id])
+  toUser          User     @relation("TransferToUser", fields: [toUserId], references: [id])
+  transferredBy   User     @relation("TransferByUser", fields: [transferredById], references: [id])
+
+  @@index([leadId])
+  @@index([fromUserId])
+  @@index([toUserId])
+  @@index([fromTeamId])
+  @@index([toTeamId])
+  @@index([transferredById])
+  @@index([transferredAt])
+  @@map("lead_transfers")
+}
+
+model Document {
+  id            String                  @id @default(cuid())
+  leadId        String
+  applicationId String?
+  docType       DocumentType
+  status        DocumentStatus          @default(PENDING)
+  fileName      String?
+  filePath      String?
+  mimeType      String?
+  fileSize      Int?
+  uploadedById  String?
+  uploadedAt    DateTime?
+  verifiedAt    DateTime?
+  createdAt     DateTime                @default(now())
+  updatedAt     DateTime                @updatedAt
+  statusHistory DocumentStatusHistory[]
+  application   LoanApplication?        @relation(fields: [applicationId], references: [id])
+  lead          Lead                    @relation(fields: [leadId], references: [id])
+  uploadedBy    User?                   @relation("DocumentUploadedBy", fields: [uploadedById], references: [id])
+
+  @@index([leadId])
+  @@index([applicationId])
+  @@index([docType])
+  @@index([status])
+  @@index([uploadedById])
+  @@index([createdAt])
+  @@index([applicationId, status])
+  @@index([leadId, status])
+  @@map("documents")
+}
+
+model Target {
+  id                 String   @id @default(uuid())
+  userId             String?
+  teamId             String?
+  period             String
+  targetLeads        Int      @default(0)
+  targetDisbursement Decimal  @default(0) @db.Decimal(15, 2)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  team               Team?    @relation("TeamTargets", fields: [teamId], references: [id])
+  user               User?    @relation("UserTargets", fields: [userId], references: [id])
+
+  @@unique([userId, period])
+  @@index([period])
+  @@index([teamId])
+  @@map("targets")
+}
+
+model Notification {
+  id            String               @id @default(cuid())
+  userId        String
+  type          NotificationType
+  priority      NotificationPriority @default(NORMAL)
+  title         String
+  message       String
+  leadId        String?
+  loanAccountId String?
+  emiScheduleId String?
+  followUpId    String?
+  isRead        Boolean              @default(false)
+  readAt        DateTime?
+  dedupeKey     String?
+  createdAt     DateTime             @default(now())
+  emiSchedule   EmiSchedule?         @relation(fields: [emiScheduleId], references: [id])
+  followUp      FollowUp?            @relation(fields: [followUpId], references: [id])
+  lead          Lead?                @relation(fields: [leadId], references: [id])
+  loanAccount   LoanAccount?         @relation(fields: [loanAccountId], references: [id])
+  user          User                 @relation(fields: [userId], references: [id])
+
+  @@unique([userId, dedupeKey])
+  @@index([userId])
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@index([leadId])
+  @@index([loanAccountId])
+  @@index([emiScheduleId])
+  @@index([userId, isRead, createdAt])
+}
+
+model AuditLog {
+  id        String      @id @default(cuid())
+  userId    String
+  action    AuditAction
+  module    String
+  recordId  String?
+  metadata  Json?
+  createdAt DateTime    @default(now())
+  user      User        @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([action])
+  @@index([module])
+  @@index([recordId])
+  @@index([createdAt])
+  @@index([module, recordId, createdAt])
+  @@index([userId, createdAt])
+}
+
+model Lender {
+  id            String            @id @default(cuid())
+  name          String
+  code          String            @unique
+  isActive      Boolean           @default(true)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  loan_accounts LoanAccount[]
+  applications  LoanApplication[]
+}
+
+model LoanApplication {
+  id                       String                     @id @default(cuid())
+  leadId                   String
+  applicationNumber        String                     @unique
+  lenderId                 String?
+  status                   ApplicationStatus          @default(DRAFT)
+  requestedAmount          Decimal?
+  sanctionedAmount         Decimal?
+  disbursedAmount          Decimal?
+  loginDate                DateTime?
+  approvalDate             DateTime?
+  disbursementDate         DateTime?
+  rejectionReason          String?
+  createdById              String
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime                   @updatedAt
+  ApplicationStatusHistory ApplicationStatusHistory[]
+  documents                Document[]
+  loan_accounts            LoanAccount?
+  createdBy                User                       @relation("ApplicationCreatedBy", fields: [createdById], references: [id])
+  lead                     Lead                       @relation(fields: [leadId], references: [id])
+  lender                   Lender?                    @relation(fields: [lenderId], references: [id])
+
+  @@index([leadId])
+  @@index([lenderId])
+  @@index([status])
+  @@index([createdById])
+  @@index([createdAt])
+  @@index([status, createdAt])
+  @@index([lenderId, status])
+  @@index([leadId, status])
+  @@map("loan_applications")
+}
+
+model DocumentStatusHistory {
+  id              String          @id @default(cuid())
+  documentId      String
+  fromStatus      DocumentStatus?
+  toStatus        DocumentStatus
+  changedById     String
+  rejectionReason String?
+  createdAt       DateTime        @default(now())
+  changedBy       User            @relation("DocumentStatusChangedBy", fields: [changedById], references: [id])
+  document        Document        @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@index([changedById])
+  @@index([createdAt])
+  @@index([documentId, createdAt])
+}
+
+model ApplicationStatusHistory {
+  id                String             @id @default(cuid())
+  applicationId     String
+  fromStatus        ApplicationStatus?
+  toStatus          ApplicationStatus
+  changedById       String
+  note              String?
+  createdAt         DateTime           @default(now())
+  loan_applications LoanApplication    @relation(fields: [applicationId], references: [id])
+  changedBy         User               @relation("ApplicationStatusChangedBy", fields: [changedById], references: [id])
+
+  @@index([applicationId])
+  @@index([changedById])
+  @@index([toStatus])
+  @@index([createdAt])
+  @@index([applicationId, createdAt])
+}
+
+model LoanAccount {
+  id                 String               @id @default(cuid())
+  applicationId      String               @unique
+  leadId             String
+  lenderId           String?
+  loanAccountNumber  String               @unique
+  principalAmount    Decimal
+  disbursedAmount    Decimal
+  interestRate       Decimal?
+  tenureMonths       Int?
+  emiAmount          Decimal?
+  disbursedAt        DateTime?
+  firstEmiDate       DateTime?
+  maturityDate       DateTime?
+  status             LoanStatus           @default(ACTIVE)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  CollectionFollowUp CollectionFollowUp[]
+  EmiSchedule        EmiSchedule[]
+  notifications      Notification[]
+  Repayment          Repayment[]
+  loan_applications  LoanApplication      @relation(fields: [applicationId], references: [id])
+  leads              Lead                 @relation(fields: [leadId], references: [id])
+  Lender             Lender?              @relation(fields: [lenderId], references: [id])
+
+  @@index([leadId])
+  @@index([lenderId])
+  @@index([status])
+  @@index([disbursedAt])
+  @@index([status, disbursedAt])
+  @@index([lenderId, status])
+  @@map("loan_accounts")
+}
+
+model EmiSchedule {
+  id                  String               @id @default(cuid())
+  loanAccountId       String
+  emiNumber           Int
+  dueDate             DateTime
+  principalAmount     Decimal
+  interestAmount      Decimal
+  emiAmount           Decimal
+  paidAmount          Decimal              @default(0)
+  outstandingAmount   Decimal
+  status              EmiStatus            @default(PENDING)
+  paidAt              DateTime?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  collectionFollowUps CollectionFollowUp[]
+  loan_accounts       LoanAccount          @relation(fields: [loanAccountId], references: [id])
+  notifications       Notification[]
+  repayments          Repayment[]
+
+  @@unique([loanAccountId, emiNumber])
+  @@index([loanAccountId])
+  @@index([dueDate])
+  @@index([status])
+  @@index([loanAccountId, dueDate])
+  @@index([status, dueDate])
+}
+
+model Repayment {
+  id              String        @id @default(cuid())
+  loanAccountId   String
+  emiScheduleId   String?
+  amount          Decimal
+  paymentDate     DateTime      @default(now())
+  paymentMode     RepaymentMode
+  transactionId   String?
+  referenceNumber String?
+  remarks         String?
+  receivedById    String
+  createdAt       DateTime      @default(now())
+  emiSchedule     EmiSchedule?  @relation(fields: [emiScheduleId], references: [id])
+  loan_accounts   LoanAccount   @relation(fields: [loanAccountId], references: [id])
+  receivedBy      User          @relation("RepaymentReceivedBy", fields: [receivedById], references: [id])
+
+  @@index([loanAccountId])
+  @@index([emiScheduleId])
+  @@index([paymentDate])
+  @@index([receivedById])
+  @@index([loanAccountId, paymentDate])
+  @@index([receivedById, paymentDate])
+}
+
+model CollectionFollowUp {
+  id             String                   @id @default(cuid())
+  loanAccountId  String
+  emiScheduleId  String?
+  assignedToId   String
+  type           CollectionFollowUpType
+  status         CollectionFollowUpStatus @default(PENDING)
+  scheduledDate  DateTime
+  scheduledTime  String?
+  notes          String?
+  promisedAmount Decimal?
+  promisedDate   DateTime?
+  completedAt    DateTime?
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+  assignedTo     User                     @relation("CollectionFollowUpAssignedTo", fields: [assignedToId], references: [id])
+  emiSchedule    EmiSchedule?             @relation(fields: [emiScheduleId], references: [id])
+  loan_accounts  LoanAccount              @relation(fields: [loanAccountId], references: [id])
+
+  @@index([loanAccountId])
+  @@index([emiScheduleId])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([scheduledDate])
+  @@index([assignedToId, status])
+  @@index([status, scheduledDate])
+  @@index([loanAccountId, scheduledDate])
+}
+
+model MasterData {
+  id          String   @id @default(cuid())
+  category    String
+  code        String
+  name        String
+  description String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([category, code])
+  @@index([category])
+  @@index([category, isActive])
+  @@index([sortOrder])
+}
+
+model NotificationPreference {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  followUpDue     Boolean  @default(true)
+  followUpOverdue Boolean  @default(true)
+  leadAssigned    Boolean  @default(true)
+  leadTransferred Boolean  @default(true)
+  emiDueSoon      Boolean  @default(true)
+  emiDueToday     Boolean  @default(true)
+  emiOverdue      Boolean  @default(true)
+  targetUpdated   Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id])
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([revokedAt])
+  @@map("refresh_tokens")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  TL
+  TELECALLER
+}
+
+enum LeadStatus {
+  NEW
+  INTERESTED
+  DOCUMENTS_PENDING
+  LOGIN
+  APPROVED
+  DISBURSED
+  REJECTED
+}
+
+enum CallStatus {
+  CONNECTED
+  NOT_CONNECTED
+  BUSY
+  WRONG_NUMBER
+}
+
+enum FollowUpStatus {
+  PENDING
+  DONE
+  MISSED
+}
+
+enum DocumentStatus {
+  PENDING
+  RECEIVED
+  VERIFIED
+  REJECTED
+}
+
+enum DocumentType {
+  AADHAAR
+  PAN
+  BANK_STATEMENT
+  SALARY_SLIP
+  PHOTO
+  ADDRESS_PROOF
+  INCOME_PROOF
+  OTHER
+}
+
+enum NotificationType {
+  FOLLOW_UP_DUE
+  FOLLOW_UP_OVERDUE
+  LEAD_ASSIGNED
+  LEAD_TRANSFERRED
+  TARGET_UPDATED
+  EMI_DUE_SOON
+  EMI_DUE_TODAY
+  EMI_OVERDUE
+  SYSTEM
+}
+
+enum NotificationPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  ASSIGN
+  TRANSFER
+  STATUS_CHANGE
+  LOGIN
+  LOGOUT
+  TARGET_UPDATE
+  FOLLOW_UP_CREATE
+  FOLLOW_UP_UPDATE
+  CALL_LOG
+}
+
+enum ApplicationStatus {
+  DRAFT
+  SUBMITTED
+  LOGIN
+  APPROVED
+  REJECTED
+  DISBURSED
+  CANCELLED
+}
+
+enum LoanStatus {
+  ACTIVE
+  CLOSED
+  FORECLOSED
+  WRITTEN_OFF
+}
+
+enum EmiStatus {
+  PENDING
+  PARTIAL
+  PAID
+  OVERDUE
+  WAIVED
+}
+
+enum RepaymentMode {
+  CASH
+  BANK_TRANSFER
+  UPI
+  NACH
+  CHEQUE
+  ONLINE
+  OTHER
+}
+
+enum CollectionFollowUpStatus {
+  PENDING
+  CONTACTED
+  PROMISED
+  PAID
+  MISSED
+  CANCELLED
+}
+
+enum CollectionFollowUpType {
+  EMI_DUE
+  EMI_OVERDUE
+  PAYMENT_PROMISE
+  COLLECTION_CALL
+}

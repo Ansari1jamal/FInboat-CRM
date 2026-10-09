@@ -1,0 +1,88 @@
+name: FinBoat CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: finboat
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: finboat_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U finboat -d finboat_test"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://finboat:test_password@localhost:5432/finboat_test
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
+      JWT_SECRET: ci-test-jwt-secret
+      CSRF_SECRET: ci-test-csrf-secret
+      FRONTEND_URL: http://localhost:5173
+      SEED_ADMIN_EMAIL: admin@finboat1.com
+      SEED_ADMIN_PASSWORD: Admin@12345
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Apply database migrations
+        run: npx prisma migrate deploy
+
+      - name: Seed test database
+        run: npx prisma db seed
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build Docker image
+        run: docker build --tag finboat-api:${{ github.sha }} .
