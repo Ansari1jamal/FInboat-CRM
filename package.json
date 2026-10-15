@@ -1,6 +1,14 @@
 {
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace frontend"
+  },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",
+    "nitro": "^3.0.260903-beta",
     "pg": "^8.23.0"
   }
 }

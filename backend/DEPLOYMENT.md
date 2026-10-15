@@ -2,6 +2,20 @@
 
 This repository deploys the API, PostgreSQL, Redis, and BullMQ worker with Docker Compose. Nginx runs on the host: one site serves the Vite frontend, and another proxies the API. Production has not been deployed by this repository change; supply the real domains, server, and secrets before following this runbook.
 
+## Vercel deployment
+
+The repository root is the Vercel project root. The Nitro Vite build serves the
+frontend and forwards `/api/*` requests to the Express app in one deployment.
+Vercel runs the HTTP API as serverless functions; it does not run the
+long-lived BullMQ worker. Keep that worker on a separate always-on service.
+
+Configure `DATABASE_URL`, `JWT_SECRET`, `CSRF_SECRET`, `FRONTEND_URL`, and the
+production Redis connection settings in Vercel's environment variables. Use
+managed PostgreSQL and Redis services; localhost defaults are not suitable for
+Vercel. Uploaded files need durable external storage because Vercel function
+filesystems are ephemeral. Apply Prisma migrations separately before serving
+production traffic.
+
 ## 1. Prepare the host and DNS
 
 Use a supported Linux VPS with Docker Engine, Docker Compose v2, Nginx, and Certbot. Permit inbound SSH, HTTP, and HTTPS only. Configure DNS records for the frontend (`finboat.com` and `www.finboat.com`) and API (`api.finboat.com`) to resolve to the host.
