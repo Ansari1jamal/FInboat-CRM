@@ -1,4 +1,5 @@
-import { fromNodeHandler } from "nitro/h3";
+import { fetchNodeHandler } from "srvx/node";
 import expressApp from "../../../backend/src/app.js";
 
-export default fromNodeHandler(expressApp);
+export default (event) =>
+  fetchNodeHandler(expressApp, event.req);
