@@ -20,6 +20,16 @@ Copy-Item .env.example .env
 Set local PostgreSQL, Redis, JWT, CSRF, and frontend-origin values in `.env`.
 Never copy production credentials into a local environment.
 
+For local development with Docker Desktop, start an unauthenticated Redis
+instance bound only to loopback:
+
+```powershell
+docker run --detach --name finboat-local-redis --restart unless-stopped --publish 127.0.0.1:6379:6379 redis:7-alpine
+```
+
+This matches the default local Redis settings. Do not use this configuration
+for production.
+
 Validate the Prisma schema and inspect migrations:
 
 ```powershell

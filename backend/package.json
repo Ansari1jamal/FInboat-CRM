@@ -11,7 +11,7 @@
     "seed:admin": "node prisma/seed-admin.js",
     "test:watch": "cross-env NODE_ENV=test jest --watch",
     "test:coverage": "cross-env NODE_ENV=test jest --coverage",
-    "postinstall": "prisma skills sync || exit 0"
+    "postinstall": "prisma generate && (prisma skills sync || exit 0)"
   },
   "keywords": [],
   "author": "",
